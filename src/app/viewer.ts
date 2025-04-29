@@ -61,7 +61,7 @@ import { PDBeViewport } from './ui/pdbe-viewport';
 import { PDBeViewportControls } from './ui/pdbe-viewport-controls';
 import { UIComponents } from './ui/split-ui/components';
 import { LayoutSpec, createPluginSplitUI, resolveHTMLElement } from './ui/split-ui/split-ui';
-
+import {Structure, StructureProperties } from "molstar/lib/mol-model/structure"
 
 export class PDBeMolstarPlugin {
 
@@ -593,6 +593,23 @@ export class PDBeMolstarPlugin {
      * `structureNumberOrId` is either index (numbered from 1!) or the ID that was provided when loading the structure. */
     getStructure(structureNumberOrId: number | string): StructureRef | undefined {
         return this.getStructures(structureNumberOrId)[0]?.structureRef;
+    }
+
+    getSelectedResidues(): { position: number, chain: string }[] {
+        const selections = Array.from(this.plugin.managers.structure.selection.entries.values());
+        const selectedResidues: { position: number, chain: string }[] = [];
+        for (const {structure} of selections) {
+
+            if (!structure) continue;
+            Structure.eachAtomicHierarchyElement(structure, {
+                residue: (loc) => {
+                  const position = StructureProperties.residue.label_seq_id(loc);
+                  const chain = StructureProperties.chain.auth_asym_id(loc);
+                    selectedResidues.push({ position, chain });
+                },
+              });
+        }
+        return selectedResidues;
     }
 
     /** Helper methods related to canvas and layout */
